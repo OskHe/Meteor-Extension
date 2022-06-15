@@ -1,4 +1,4 @@
-package dummy.addon.template.modules;
+package oskhe.meteorextension.modules;
 
 import meteordevelopment.meteorclient.systems.modules.Categories;
 import meteordevelopment.meteorclient.systems.modules.Module;

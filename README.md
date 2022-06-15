@@ -1,8 +1,16 @@
-# Meteor Addon Template
+# Meteor Extention
+A extention to the Meteor Client
 
-A template to allow easy usage of the Meteor Addon API.
+## Features
 
-### How to use:  
-- Clone this project
-- Use this template to create new modules/commands
-- Run the mod with Meteor.
+### Mods
+- None yet 😉
+
+### HUD
+- 📡 Radar (inspired by [Meteor Rejects](https://github.com/AntiCope/meteor-rejects/))
+- 📏 looking direction
+
+## How to use:
+- Download the latest [release](/../../releases) of this mod from the releases tab.
+- Put it in your `.minecraft/mods` folder where you have installed Meteor.
+- 

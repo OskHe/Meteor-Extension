@@ -1,4 +1,4 @@
-package dummy.addon.template.modules.hud;
+package oskhe.meteorextension.modules.hud;
 
 import meteordevelopment.meteorclient.systems.hud.HUD;
 import meteordevelopment.meteorclient.systems.hud.modules.DoubleTextHudElement;

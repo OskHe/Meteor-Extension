@@ -1,27 +1,27 @@
 {
   "schemaVersion": 1,
-  "id": "addon-template",
+  "id": "meteor-extension",
   "version": "${version}",
-  "name": "Addon Template",
-  "description": "An addon template for the Meteor addons.",
+  "name": "Meteor-Extension",
+  "description": "An extension for the meteor-client.",
   "authors": [
-    "seasnail8169"
+    "OskHe"
   ],
   "contact": {
-    "repo": "https://github.com/MeteorDevelopment/meteor-addon-template"
+    "repo": "https://github.com/oskhe/meteor-extension"
   },
-  "icon": "assets/template/icon.png",
+  "icon": "assets/meteorextension/iconOH.png",
   "environment": "client",
   "entrypoints": {
     "meteor": [
-      "dummy.addon.template.TemplateAddon"
+      "oskhe.meteorextension.MeteorExtension"
     ]
   },
   "mixins": [
-    "template.mixins.json"
+    "meteorextension.mixins.json"
   ],
   "custom": {
-    "meteor-client:color": "225,25,25"
+    "meteor-client:color": "25,255,25"
   },
   "depends": {
     "java": ">=17",
