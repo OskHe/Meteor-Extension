@@ -1,5 +1,5 @@
-# Meteor Extention
-A extention to the Meteor Client
+# Meteor Extension
+A extension to the Meteor Client
 
 ## Features
 
