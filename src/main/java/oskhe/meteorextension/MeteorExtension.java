@@ -20,7 +20,7 @@ import java.lang.invoke.MethodHandles;
 
 public class MeteorExtension extends MeteorAddon {
     public static final Logger LOG = LoggerFactory.getLogger(MeteorExtension.class);
-    //public static final Category CATEGORY_MAIN = new Category("Extension");
+    public static final Category CATEGORY_MAIN = new Category("Extension");
 
     @Override
     public void onInitialize() {
