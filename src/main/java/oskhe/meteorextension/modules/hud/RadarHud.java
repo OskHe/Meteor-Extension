@@ -1,8 +1,11 @@
 package oskhe.meteorextension.modules.hud;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.renderer.Renderer2D;
+import meteordevelopment.meteorclient.renderer.Renderer3D;
+import meteordevelopment.meteorclient.renderer.text.VanillaTextRenderer;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.hud.HUD;
 import meteordevelopment.meteorclient.systems.hud.HudRenderer;
@@ -12,14 +15,19 @@ import meteordevelopment.meteorclient.systems.modules.render.ESP;
 import meteordevelopment.meteorclient.systems.modules.render.Freecam;
 import meteordevelopment.meteorclient.systems.waypoints.Waypoint;
 import meteordevelopment.meteorclient.systems.waypoints.Waypoints;
+import meteordevelopment.meteorclient.utils.Utils;
 import meteordevelopment.meteorclient.utils.entity.EntityUtils;
+import meteordevelopment.meteorclient.utils.misc.Vec2;
 import meteordevelopment.meteorclient.utils.misc.Vec3;
+import meteordevelopment.meteorclient.utils.render.RenderUtils;
 import meteordevelopment.meteorclient.utils.render.color.Color;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.util.math.Vector2f;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.util.math.Vec3d;
+import org.lwjgl.opengl.GL11;
 import oskhe.meteorextension.MeteorExtension;
 
 import java.math.BigDecimal;
@@ -27,26 +35,6 @@ import java.math.MathContext;
 import java.util.Iterator;
 
 public class RadarHud extends HudElement {
-    public enum AvailableCharacters {//*●•◦+
-        STAR("*"),
-        POINT("•"),
-        CIRCLE("◦"),
-        PLUS("+"),
-        DOT("●");
-
-        private String character = "";
-
-        AvailableCharacters(String character) {
-            this.character = character;
-        }
-
-        @Override
-        public String toString() {
-            return character;
-        }
-    }
-
-
 
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
 
@@ -55,7 +43,7 @@ public class RadarHud extends HudElement {
         .description("The scale.")
         .defaultValue(1)
         .min(1)
-        .sliderRange(0.01, 10)
+        .sliderRange(0.01, 5)
         .build()
     );
 
@@ -103,6 +91,27 @@ public class RadarHud extends HudElement {
         .build()
     );
 
+    private final Setting<Boolean> followFreecam = sgGeneral.add(new BoolSetting.Builder()
+        .name("follow-freecam")
+        .description("Wether the radar center should follow the freecam position.")
+        .defaultValue(true)
+        .build()
+    );
+
+    /*private final Setting<Boolean> showFOV = sgGeneral.add(new BoolSetting.Builder()
+        .name("show-fow")
+        .description("Wether to show the FOV")
+        .defaultValue(true)
+        .build()
+    );
+
+    private final Setting<SettingColor> fovColor = sgGeneral.add(new ColorSetting.Builder()
+        .name("background-color")
+        .description("The color of the background.")
+        .defaultValue(new SettingColor(128, 128, 128, 64))
+        .visible(showFOV::get)
+        .build()
+    );*/
 
     public RadarHud(HUD hud) {
         super(hud, "Radar", "Shows a Radar on your HUD thar tells you where entities are.");
@@ -115,8 +124,13 @@ public class RadarHud extends HudElement {
 
     @Override
     public void render(HudRenderer renderer) {
+        if (mc.player == null) return;
+
         ESP esp = Modules.get().get(ESP.class);
         if (esp == null) return;
+
+        Freecam freecam = Modules.get().get(Freecam.class);
+        if (freecam == null) return;
 
         renderer.addPostTask(() -> {
             double x = box.getX();
@@ -126,9 +140,27 @@ public class RadarHud extends HudElement {
             Renderer2D.COLOR.quad(x, y, box.width, box.height, backgroundColor.get());
             Renderer2D.COLOR.render(null);
 
+            Vec3d pos = mc.player.getPos();
+            double yaw = mc.player.getHeadYaw() % 360;
+
+            if (freecam.isActive() && followFreecam.get()) {
+                pos = new Vec3d(freecam.pos.x, freecam.pos.y, freecam.pos.z);
+                yaw = freecam.yaw;
+            }
+
             if (drawSelf.get()) {
                 renderer.text(character.get().toString(), box.width/2 + x, box.height/2 + y, esp.getColor(mc.player));
             }
+
+            /*if (showFOV.get()) {
+                Utils.unscaledProjection();
+
+                //Renderer2D.COLOR.triangles.begin();
+                Renderer2D.COLOR.triangles.vec2(box.width / 2 + x, box.height / 2 + y);
+                Renderer2D.COLOR.triangles.vec2(x, y);
+                Renderer2D.COLOR.triangles.vec2(box.width + x, y);
+                Renderer2D.COLOR.triangles.end();
+            }*/
 
             if (mc.world != null) {
                 for (Entity entity : mc.world.getEntities()) {
@@ -136,71 +168,46 @@ public class RadarHud extends HudElement {
 
                     assert mc.player != null;
 
-                    double xPos = ((entity.getX() - mc.player.getX()) * scale.get() * zoom.get());
-                    double yPos = ((entity.getZ() - mc.player.getZ()) * scale.get() * zoom.get());
+                    double xPos = ((entity.getX() - pos.getX()) * scale.get() * zoom.get());
+                    double yPos = ((entity.getZ() - pos.getZ()) * scale.get() * zoom.get());
 
-                    double dist = Math.sqrt(xPos*xPos + yPos*yPos);
+                    Vec2 newPos = rotate(new Vec2(xPos, yPos), yaw);
 
-                    double theta = Math.atan(yPos/xPos);
+                    String icon = character.get().toString();
 
-                    if (xPos > 0) {
-                        theta += Math.PI;
-                    }
+                    newPos.x += box.width/2 - (renderer.textWidth(icon) / 2);
+                    newPos.y += box.height/2 - (renderer.textHeight() / 2);
 
-                    double yaw = mc.player.getHeadYaw() % 360; //0-360
-                    theta = theta - (yaw * (Math.PI/180d));
+                    if (newPos.x < 0 || newPos.y < 0 || newPos.x > box.width - scale.get() || newPos.y > box.height - scale.get()) continue;
 
-                    xPos = dist * Math.cos(theta);
-                    yPos = dist * Math.sin(theta);
-
-                    xPos += box.width/2;
-                    yPos += box.height/2;
-
-                    if (xPos < 0 || yPos < 0 || xPos > box.width - scale.get() || yPos > box.height - scale.get()) continue;
-
-                    renderer.text(character.get().toString(), xPos + x, yPos + y, esp.getColor(entity));
+                    renderer.text(icon, newPos.x + x, newPos.y + y, esp.getColor(entity));
                 }
             }
 
             if (showWaypoints.get()) {
-                Iterator<Waypoint> waypoints = Waypoints.get().iterator();
-                while (waypoints.hasNext()) {
-                    Waypoint waypoint = waypoints.next();
-
+                for (Waypoint waypoint : Waypoints.get()) {
                     Vec3 c = waypoint.getCoords();
                     Vec3d coords = new Vec3d(c.x, c.y, c.z);
 
-                    double xPos = ((coords.getX() - mc.player.getX()) * scale.get() * zoom.get());
-                    double yPos = ((coords.getZ() - mc.player.getZ()) * scale.get() * zoom.get());
+                    double xPos = ((coords.getX() - pos.getX()) * scale.get() * zoom.get());
+                    double yPos = ((coords.getZ() - pos.getZ()) * scale.get() * zoom.get());
 
-                    double dist = Math.sqrt(xPos*xPos + yPos*yPos);
+                    Vec2 newPos = rotate(new Vec2(xPos, yPos), yaw);
 
-                    double theta = Math.atan(yPos/xPos);
+                    String icon = character.get().toString();
 
-                    if (xPos > 0) {
-                        theta += Math.PI;
-                    }
+                    newPos.x += box.width/2 - (renderer.textWidth(icon) / 2);
+                    newPos.y += box.height/2 - (renderer.textHeight() / 2);
 
-                    double yaw = mc.player.getHeadYaw() % 360; //0-360
-                    theta = theta - (yaw * (Math.PI/180d));
+                    if (newPos.x < 0 || newPos.y < 0 || newPos.x > box.width - scale.get() || newPos.y > box.height - scale.get()) continue;
 
-                    xPos = dist * Math.cos(theta);
-                    yPos = dist * Math.sin(theta);
-
-                    xPos += box.width/2;
-                    yPos += box.height/2;
-
-                    if (xPos < 0 || yPos < 0 || xPos > box.width - scale.get() || yPos > box.height - scale.get()) continue;
-
-                    renderer.text(AvailableCharacters.DOT.toString(), xPos + x, yPos + y, waypoint.color);
+                    renderer.text(icon, newPos.x + x, newPos.y + y, waypoint.color);
                 }
             }
 
             Renderer2D.COLOR.render(null);
         });
-
     }
-
 
     private boolean shouldSkip(Entity entity) {
         //if (!entities.get().getBoolean(entity.getType())) return true;
@@ -208,4 +215,39 @@ public class RadarHud extends HudElement {
         return !entities.get().getBoolean(entity.getType());
     }
 
+    private Vec2 rotate(Vec2 vec, double angle) {
+        double dist = Math.sqrt(vec.x*vec.x + vec.y*vec.y);
+
+        double theta = Math.atan(vec.y / vec.x);
+
+        if (vec.x > 0) {
+            theta += Math.PI;
+        }
+
+        theta = theta - (angle * (Math.PI / 180f));
+
+        vec.x = dist * Math.cos(theta);
+        vec.y = dist * Math.sin(theta);
+
+        return vec;
+    }
+
+    public enum AvailableCharacters {
+        STAR("*"),
+        POINT("•"),
+        CIRCLE("◦"),
+        PLUS("+"),
+        DOT("●");
+
+        private String character = "";
+
+        AvailableCharacters(String character) {
+            this.character = character;
+        }
+
+        @Override
+        public String toString() {
+            return character;
+        }
+    }
 }

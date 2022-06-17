@@ -1,26 +1,26 @@
 package oskhe.meteorextension;
 
 import meteordevelopment.meteorclient.systems.Systems;
-import oskhe.meteorextension.commands.ExampleCommand;
-import oskhe.meteorextension.modules.AnotherExample;
-import oskhe.meteorextension.modules.Example;
-import oskhe.meteorextension.modules.hud.HudExample;
+import meteordevelopment.meteorclient.systems.commands.Commands;
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.metadata.ModMetadata;
+import net.minecraft.item.Items;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.addons.GithubRepo;
 import meteordevelopment.meteorclient.addons.MeteorAddon;
-import meteordevelopment.meteorclient.systems.commands.Commands;
 import meteordevelopment.meteorclient.systems.hud.HUD;
 import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import oskhe.meteorextension.modules.hud.LookingDirectionHud;
 import oskhe.meteorextension.modules.hud.RadarHud;
 
 import java.lang.invoke.MethodHandles;
 
 public class MeteorExtension extends MeteorAddon {
     public static final Logger LOG = LoggerFactory.getLogger(MeteorExtension.class);
-    public static final Category CATEGORY_MAIN = new Category("Extension");
+    public static final Category CATEGORY_MAIN = new Category("Extension", Items.EXPERIENCE_BOTTLE.getDefaultStack());
 
     @Override
     public void onInitialize() {
@@ -29,17 +29,14 @@ public class MeteorExtension extends MeteorAddon {
         // Required when using @EventHandler
         MeteorClient.EVENT_BUS.registerLambdaFactory("oskhe.meteorextension", (lookupInMethod, klass) -> (MethodHandles.Lookup) lookupInMethod.invoke(null, klass, MethodHandles.lookup()));
 
-        // Modules
-        //Modules.get().add(new Example());
-        //Modules.get().add(new AnotherExample());
+        //Modules modules = Systems.get(Modules.class);
 
-        // Commands
-        //Commands.get().add(new ExampleCommand());
+        //Commands commands = Systems.get(Commands.class);
 
         // HUD
         HUD hud = Systems.get(HUD.class);
-        //HUD.get().elements.add(new HudExample());
         hud.elements.add(new RadarHud(hud));
+        //hud.elements.add(new LookingDirectionHud(hud));
     }
 
     @Override
@@ -59,6 +56,16 @@ public class MeteorExtension extends MeteorAddon {
 
     @Override
     public String getCommit() {
-        return "";
+        ModMetadata metedata = FabricLoader
+            .getInstance()
+            .getModContainer("meteor-extension")
+            .get().getMetadata();
+
+        if (!metedata.containsCustomValue("github:sha"))
+            return null;
+
+        String commit = metedata.getCustomValue("github:sha").getAsString();
+
+        return commit.isEmpty() ? null : commit.trim();
     }
 }
