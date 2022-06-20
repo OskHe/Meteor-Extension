@@ -52,7 +52,7 @@ A extension for the Meteor Client
 
 ##Credits
 - [Meteor Client](https://github.com/MeteorDevelopment/meteor-client) for the client
-- [Meteor Tweaks](https://github.com/Declipsonator/Meteor-Tweaks) for the inspiration for Radar
+- [Meteor Rejects](https://github.com/AntiCope/meteor-rejects/) for the inspiration for Radar
 
 ## How to use:
 - Download the latest [release](/../../releases) of this mod from the releases tab.
