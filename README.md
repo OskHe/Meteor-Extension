@@ -50,7 +50,7 @@ A extension for the Meteor Client
 ### HUD
 - 📡 Radar (inspired by [Meteor Rejects](https://github.com/AntiCope/meteor-rejects/))
 
-##Credits
+## Credits
 - [Meteor Client](https://github.com/MeteorDevelopment/meteor-client) for the client
 - [Meteor Rejects](https://github.com/AntiCope/meteor-rejects/) for the inspiration for Radar
 
