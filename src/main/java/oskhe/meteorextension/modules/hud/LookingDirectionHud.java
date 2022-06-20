@@ -1,22 +1,13 @@
 package oskhe.meteorextension.modules.hud;
 
-import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import meteordevelopment.meteorclient.renderer.Renderer2D;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.hud.HUD;
 import meteordevelopment.meteorclient.systems.hud.HudRenderer;
 import meteordevelopment.meteorclient.systems.hud.modules.HudElement;
 import meteordevelopment.meteorclient.systems.modules.Modules;
-import meteordevelopment.meteorclient.systems.modules.render.ESP;
 import meteordevelopment.meteorclient.systems.modules.render.Freecam;
-import meteordevelopment.meteorclient.systems.waypoints.Waypoint;
-import meteordevelopment.meteorclient.systems.waypoints.Waypoints;
-import meteordevelopment.meteorclient.utils.misc.Vec2;
-import meteordevelopment.meteorclient.utils.misc.Vec3;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.util.math.Vec3d;
 
 public class LookingDirectionHud extends HudElement {
 

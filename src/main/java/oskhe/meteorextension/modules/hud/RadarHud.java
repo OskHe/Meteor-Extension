@@ -1,11 +1,7 @@
 package oskhe.meteorextension.modules.hud;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
-import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.renderer.Renderer2D;
-import meteordevelopment.meteorclient.renderer.Renderer3D;
-import meteordevelopment.meteorclient.renderer.text.VanillaTextRenderer;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.hud.HUD;
 import meteordevelopment.meteorclient.systems.hud.HudRenderer;
@@ -15,24 +11,12 @@ import meteordevelopment.meteorclient.systems.modules.render.ESP;
 import meteordevelopment.meteorclient.systems.modules.render.Freecam;
 import meteordevelopment.meteorclient.systems.waypoints.Waypoint;
 import meteordevelopment.meteorclient.systems.waypoints.Waypoints;
-import meteordevelopment.meteorclient.utils.Utils;
-import meteordevelopment.meteorclient.utils.entity.EntityUtils;
 import meteordevelopment.meteorclient.utils.misc.Vec2;
 import meteordevelopment.meteorclient.utils.misc.Vec3;
-import meteordevelopment.meteorclient.utils.render.RenderUtils;
-import meteordevelopment.meteorclient.utils.render.color.Color;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.util.math.Vector2f;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.util.math.Vec3d;
-import org.lwjgl.opengl.GL11;
-import oskhe.meteorextension.MeteorExtension;
-
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.util.Iterator;
 
 public class RadarHud extends HudElement {
 
@@ -63,6 +47,13 @@ public class RadarHud extends HudElement {
         .build()
     );
 
+    private final Setting<Boolean> letters = sgGeneral.add(new BoolSetting.Builder()
+        .name("letters")
+        .description("Use entity's type first letter.")
+        .defaultValue(false)
+        .build()
+    );
+
     private final Setting<Object2BooleanMap<EntityType<?>>> entities = sgGeneral.add(new EntityTypeListSetting.Builder()
         .name("entities")
         .description("Select entities to be drawn.")
@@ -88,6 +79,14 @@ public class RadarHud extends HudElement {
         .name("waypoints")
         .description("Show waypoints.")
         .defaultValue(false)
+        .build()
+    );
+
+    private final Setting<AvailableCharacters> characterWaypoints = sgGeneral.add(new EnumSetting.Builder<AvailableCharacters>()
+        .name("character-waypoints")
+        .description("Choose the character to be drawn as the location of the waypoint.")
+        .defaultValue(AvailableCharacters.DOT)
+        .visible(showWaypoints::get)
         .build()
     );
 
@@ -162,48 +161,9 @@ public class RadarHud extends HudElement {
                 Renderer2D.COLOR.triangles.end();
             }*/
 
-            if (mc.world != null) {
-                for (Entity entity : mc.world.getEntities()) {
-                    if (shouldSkip(entity)) continue;
+            drawEntities(pos, yaw, renderer);
 
-                    assert mc.player != null;
-
-                    double xPos = ((entity.getX() - pos.getX()) * scale.get() * zoom.get());
-                    double yPos = ((entity.getZ() - pos.getZ()) * scale.get() * zoom.get());
-
-                    Vec2 newPos = rotate(new Vec2(xPos, yPos), yaw);
-
-                    String icon = character.get().toString();
-
-                    newPos.x += box.width/2 - (renderer.textWidth(icon) / 2);
-                    newPos.y += box.height/2 - (renderer.textHeight() / 2);
-
-                    if (newPos.x < 0 || newPos.y < 0 || newPos.x > box.width - scale.get() || newPos.y > box.height - scale.get()) continue;
-
-                    renderer.text(icon, newPos.x + x, newPos.y + y, esp.getColor(entity));
-                }
-            }
-
-            if (showWaypoints.get()) {
-                for (Waypoint waypoint : Waypoints.get()) {
-                    Vec3 c = waypoint.getCoords();
-                    Vec3d coords = new Vec3d(c.x, c.y, c.z);
-
-                    double xPos = ((coords.getX() - pos.getX()) * scale.get() * zoom.get());
-                    double yPos = ((coords.getZ() - pos.getZ()) * scale.get() * zoom.get());
-
-                    Vec2 newPos = rotate(new Vec2(xPos, yPos), yaw);
-
-                    String icon = character.get().toString();
-
-                    newPos.x += box.width/2 - (renderer.textWidth(icon) / 2);
-                    newPos.y += box.height/2 - (renderer.textHeight() / 2);
-
-                    if (newPos.x < 0 || newPos.y < 0 || newPos.x > box.width - scale.get() || newPos.y > box.height - scale.get()) continue;
-
-                    renderer.text(icon, newPos.x + x, newPos.y + y, waypoint.color);
-                }
-            }
+            drawWaypoints(pos, yaw, renderer);
 
             Renderer2D.COLOR.render(null);
         });
@@ -230,6 +190,70 @@ public class RadarHud extends HudElement {
         vec.y = dist * Math.sin(theta);
 
         return vec;
+    }
+
+    private void drawEntities(Vec3d pos, double yaw, HudRenderer renderer) {
+        ESP esp = Modules.get().get(ESP.class);
+        if (esp == null) return;
+
+        double x = box.getX();
+        double y = box.getY();
+
+        if (mc.world != null) {
+            for (Entity entity : mc.world.getEntities()) {
+                if (shouldSkip(entity)) continue;
+
+                assert mc.player != null;
+
+                //entity.pos
+
+                double xPos = ((entity.getX() - pos.getX()) * scale.get() * zoom.get());
+                double yPos = ((entity.getZ() - pos.getZ()) * scale.get() * zoom.get());
+
+                Vec2 newPos = rotate(new Vec2(xPos, yPos), yaw);
+
+                String icon = character.get().toString();
+
+                if (letters.get())
+                    icon = entity.getType().getUntranslatedName().substring(0,1).toUpperCase();
+
+                newPos.x += box.width/2/* - (renderer.textWidth(icon) / 2)*/;
+                newPos.y += box.height/2/* - (renderer.textHeight() / 2)*/;
+
+                if (newPos.x < 0 || newPos.y < 0 || newPos.x > box.width - scale.get() || newPos.y > box.height - scale.get()) continue;
+
+                renderer.text(icon, newPos.x + x, newPos.y + y, esp.getColor(entity));
+            }
+        }
+    }
+
+    private void drawWaypoints(Vec3d pos, double yaw, HudRenderer renderer) {
+        double x = box.getX();
+        double y = box.getY();
+
+        if (showWaypoints.get()) {
+            for (Waypoint waypoint : Waypoints.get()) {
+                Vec3 c = waypoint.getCoords();
+                Vec3d coords = new Vec3d(c.x, c.y, c.z);
+
+                double xPos = ((coords.getX() - pos.getX()) * scale.get() * zoom.get());
+                double yPos = ((coords.getZ() - pos.getZ()) * scale.get() * zoom.get());
+
+                Vec2 newPos = rotate(new Vec2(xPos, yPos), yaw);
+
+                String icon = characterWaypoints.get().toString();
+
+                if (letters.get() && waypoint.name.length() > 0)
+                    icon = waypoint.name.substring(0, 1);
+
+                newPos.x += box.width/2/* - (renderer.textWidth(icon) / 2)*/;
+                newPos.y += box.height/2/* - (renderer.textHeight() / 2)*/;
+
+                if (newPos.x < 0 || newPos.y < 0 || newPos.x > box.width - scale.get() || newPos.y > box.height - scale.get()) continue;
+
+                renderer.text(icon, newPos.x + x, newPos.y + y, waypoint.color);
+            }
+        }
     }
 
     public enum AvailableCharacters {

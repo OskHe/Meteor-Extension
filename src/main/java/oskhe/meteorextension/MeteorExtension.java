@@ -1,19 +1,18 @@
 package oskhe.meteorextension;
 
-import meteordevelopment.meteorclient.systems.Systems;
-import meteordevelopment.meteorclient.systems.commands.Commands;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.metadata.ModMetadata;
-import net.minecraft.item.Items;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.addons.GithubRepo;
 import meteordevelopment.meteorclient.addons.MeteorAddon;
+import meteordevelopment.meteorclient.systems.Systems;
 import meteordevelopment.meteorclient.systems.hud.HUD;
 import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.metadata.ModMetadata;
+import net.minecraft.item.Items;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import oskhe.meteorextension.modules.hud.LookingDirectionHud;
+import oskhe.meteorextension.modules.hud.DistanceHud;
 import oskhe.meteorextension.modules.hud.RadarHud;
 
 import java.lang.invoke.MethodHandles;
@@ -24,7 +23,7 @@ public class MeteorExtension extends MeteorAddon {
 
     @Override
     public void onInitialize() {
-        LOG.info("Initializing Meteor Addon Meteor-Extension");
+        LOG.info("Initializing Meteor-Extension");
 
         // Required when using @EventHandler
         MeteorClient.EVENT_BUS.registerLambdaFactory("oskhe.meteorextension", (lookupInMethod, klass) -> (MethodHandles.Lookup) lookupInMethod.invoke(null, klass, MethodHandles.lookup()));
@@ -36,7 +35,13 @@ public class MeteorExtension extends MeteorAddon {
         // HUD
         HUD hud = Systems.get(HUD.class);
         hud.elements.add(new RadarHud(hud));
-        //hud.elements.add(new LookingDirectionHud(hud));
+        hud.elements.add(new DistanceHud(hud));
+        //hud.elements.add(new InFOVHud(hud));
+
+        hud.bottomRight.add(new RadarHud(hud));
+        hud.topLeft.add(new DistanceHud(hud));
+        //hud.topCenter.add(new InFOVHud(hud));
+
     }
 
     @Override
