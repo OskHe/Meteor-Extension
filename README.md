@@ -48,9 +48,10 @@ A extension for the Meteor Client
 - None yet 😉
 
 ### HUD
-- 📡 Radar (inspired by [Meteor Rejects](https://github.com/AntiCope/meteor-rejects/))
+- 📡 Radar (shows a Radar on your HUD thar tells you where entities are) (inspired by [Meteor Rejects](https://github.com/AntiCope/meteor-rejects/))
+- 📏 Distance (measures the distance to the point you are looking at)
 
-##Credits
+## Credits
 - [Meteor Client](https://github.com/MeteorDevelopment/meteor-client) for the client
 - [Meteor Rejects](https://github.com/AntiCope/meteor-rejects/) for the inspiration for Radar
 
