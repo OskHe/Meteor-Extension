@@ -12,13 +12,6 @@ public class DistanceHud extends DoubleTextHudElement {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
     private static final String left = "Distance: ";
 
-    /*private final Setting<SettingColor> backgroundColor = sgGeneral.add(new ColorSetting.Builder()
-        .name("background-color")
-        .description("The color of the background.")
-        .defaultValue(new SettingColor(0, 0, 0, 64))
-        .build()
-    );*/
-
     public final Setting<Boolean> exact = sgGeneral.add(new BoolSetting.Builder()
         .name("exact")
         .description("Wether to show the exact distance")
@@ -56,7 +49,7 @@ public class DistanceHud extends DoubleTextHudElement {
     );
 
     public DistanceHud(HUD hud) {
-        super(hud, "Radar", "Shows a Radar on your HUD thar tells you where entities are.", left);
+        super(hud, "distance", "Measures the distance to the Point you are looking at.", left);
         //super();
     }
 

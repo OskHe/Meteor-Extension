@@ -22,21 +22,10 @@ public class RadarHud extends HudElement {
 
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
 
-    private final Setting<Double> scale = sgGeneral.add(new DoubleSetting.Builder()
-        .name("scale")
-        .description("The scale.")
-        .defaultValue(1)
-        .min(1)
-        .sliderRange(0.01, 5)
-        .build()
-    );
-
-    private final Setting<Double> zoom = sgGeneral.add(new DoubleSetting.Builder()
-        .name("zoom")
-        .description("Radar zoom.")
-        .defaultValue(1)
-        .min(0.01)
-        .sliderRange(0.01, 3)
+    private final Setting<Object2BooleanMap<EntityType<?>>> entities = sgGeneral.add(new EntityTypeListSetting.Builder()
+        .name("entities")
+        .description("Select entities to be drawn.")
+        .defaultValue(EntityType.PLAYER)
         .build()
     );
 
@@ -54,13 +43,6 @@ public class RadarHud extends HudElement {
         .build()
     );
 
-    private final Setting<Object2BooleanMap<EntityType<?>>> entities = sgGeneral.add(new EntityTypeListSetting.Builder()
-        .name("entities")
-        .description("Select entities to be drawn.")
-        .defaultValue(EntityType.PLAYER)
-        .build()
-    );
-
     private final Setting<SettingColor> backgroundColor = sgGeneral.add(new ColorSetting.Builder()
         .name("background-color")
         .description("The color of the background.")
@@ -71,6 +53,21 @@ public class RadarHud extends HudElement {
     public final Setting<Boolean> drawSelf = sgGeneral.add(new BoolSetting.Builder()
         .name("draw-self")
         .description("Wether to draw you on the Radar")
+        .defaultValue(true)
+        .build()
+    );
+
+    private final Setting<AvailableCharacters> characterSelf = sgGeneral.add(new EnumSetting.Builder<AvailableCharacters>()
+        .name("character-self")
+        .description("Choose the character to be drawn as the location of your self.")
+        .defaultValue(AvailableCharacters.DOT)
+        .visible(drawSelf::get)
+        .build()
+    );
+
+    private final Setting<Boolean> followFreecam = sgGeneral.add(new BoolSetting.Builder()
+        .name("follow-freecam")
+        .description("Wether the radar center should follow the freecam position.")
         .defaultValue(true)
         .build()
     );
@@ -90,10 +87,21 @@ public class RadarHud extends HudElement {
         .build()
     );
 
-    private final Setting<Boolean> followFreecam = sgGeneral.add(new BoolSetting.Builder()
-        .name("follow-freecam")
-        .description("Wether the radar center should follow the freecam position.")
-        .defaultValue(true)
+    private final Setting<Double> scale = sgGeneral.add(new DoubleSetting.Builder()
+        .name("scale")
+        .description("The scale.")
+        .defaultValue(1)
+        .min(1)
+        .sliderRange(0.01, 5)
+        .build()
+    );
+
+    private final Setting<Double> zoom = sgGeneral.add(new DoubleSetting.Builder()
+        .name("zoom")
+        .description("Radar zoom.")
+        .defaultValue(1)
+        .min(0.01)
+        .sliderRange(0.01, 3)
         .build()
     );
 
@@ -113,7 +121,7 @@ public class RadarHud extends HudElement {
     );*/
 
     public RadarHud(HUD hud) {
-        super(hud, "Radar", "Shows a Radar on your HUD thar tells you where entities are.");
+        super(hud, "radar-extension", "Shows a Radar on your HUD thar tells you where entities are.");
     }
 
     @Override
@@ -148,7 +156,7 @@ public class RadarHud extends HudElement {
             }
 
             if (drawSelf.get()) {
-                renderer.text(character.get().toString(), box.width/2 + x, box.height/2 + y, esp.getColor(mc.player));
+                renderer.text(characterSelf.get().toString(), box.width/2 + x, box.height/2 + y, esp.getColor(mc.player));
             }
 
             /*if (showFOV.get()) {

@@ -38,8 +38,8 @@ public class MeteorExtension extends MeteorAddon {
         hud.elements.add(new DistanceHud(hud));
         //hud.elements.add(new InFOVHud(hud));
 
-        hud.bottomRight.add(new RadarHud(hud));
-        hud.topLeft.add(new DistanceHud(hud));
+        //hud.bottomRight.add(new RadarHud(hud));
+        //hud.topLeft.add(new DistanceHud(hud));
         //hud.topCenter.add(new InFOVHud(hud));
 
     }
