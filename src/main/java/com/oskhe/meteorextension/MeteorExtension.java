@@ -1,10 +1,11 @@
-package oskhe.meteorextension;
+package com.oskhe.meteorextension;
 
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.addons.GithubRepo;
 import meteordevelopment.meteorclient.addons.MeteorAddon;
 import meteordevelopment.meteorclient.systems.Systems;
-import meteordevelopment.meteorclient.systems.hud.HUD;
+import meteordevelopment.meteorclient.systems.hud.Hud;
+import meteordevelopment.meteorclient.systems.hud.HudGroup;
 import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import net.fabricmc.loader.api.FabricLoader;
@@ -12,30 +13,37 @@ import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.item.Items;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import oskhe.meteorextension.modules.hud.DistanceHud;
-import oskhe.meteorextension.modules.hud.RadarHud;
+import com.oskhe.meteorextension.hud.DistanceHud;
+import com.oskhe.meteorextension.hud.RadarHud;
 
 import java.lang.invoke.MethodHandles;
 
 public class MeteorExtension extends MeteorAddon {
     public static final Logger LOG = LoggerFactory.getLogger(MeteorExtension.class);
     public static final Category CATEGORY_MAIN = new Category("Extension", Items.EXPERIENCE_BOTTLE.getDefaultStack());
+    public static final HudGroup HUD_GROUP = new HudGroup("Extension");
 
     @Override
     public void onInitialize() {
         LOG.info("Initializing Meteor-Extension");
 
         // Required when using @EventHandler
-        MeteorClient.EVENT_BUS.registerLambdaFactory("oskhe.meteorextension", (lookupInMethod, klass) -> (MethodHandles.Lookup) lookupInMethod.invoke(null, klass, MethodHandles.lookup()));
+        MeteorClient.EVENT_BUS.registerLambdaFactory("com.oskhe.meteorextension", (lookupInMethod, klass) -> (MethodHandles.Lookup) lookupInMethod.invoke(null, klass, MethodHandles.lookup()));
 
         //Modules modules = Systems.get(Modules.class);
 
         //Commands commands = Systems.get(Commands.class);
-
+        //     __o
+        //    / /\_
+        //    _/\
+        //      /
         // HUD
-        HUD hud = Systems.get(HUD.class);
+        /*HUD hud = Systems.get(HUD.class);
         hud.elements.add(new RadarHud(hud));
-        hud.elements.add(new DistanceHud(hud));
+        hud.elements.add(new DistanceHud(hud));*/
+
+        Hud.get().register(RadarHud.INFO);
+
         //hud.elements.add(new InFOVHud(hud));
 
         //hud.bottomRight.add(new RadarHud(hud));
@@ -47,6 +55,11 @@ public class MeteorExtension extends MeteorAddon {
     @Override
     public void onRegisterCategories() {
         Modules.registerCategory(CATEGORY_MAIN);
+    }
+
+    @Override
+    public String getPackage() {
+        return "com.oskhe.meteorextension";
     }
 
     @Override

@@ -1,12 +1,8 @@
-package oskhe.meteorextension.modules.hud;
+package com.oskhe.meteorextension.hud;
 
-import meteordevelopment.meteorclient.renderer.Renderer2D;
 import meteordevelopment.meteorclient.settings.*;
-import meteordevelopment.meteorclient.systems.hud.HUD;
-import meteordevelopment.meteorclient.systems.hud.HudRenderer;
-import meteordevelopment.meteorclient.systems.hud.modules.HudElement;
-import meteordevelopment.meteorclient.systems.modules.Modules;
-import meteordevelopment.meteorclient.systems.modules.render.Freecam;
+import meteordevelopment.meteorclient.systems.hud.HudElement;
+import meteordevelopment.meteorclient.systems.hud.HudElementInfo;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 
 public class LookingDirectionHud extends HudElement {
@@ -66,16 +62,22 @@ public class LookingDirectionHud extends HudElement {
         .build()
     );
 
-    public LookingDirectionHud(HUD hud) {
-        super(hud, "Looking-Direction", "Shows you in which direction you are looking.");
+    public LookingDirectionHud(HudElementInfo<?> info) {
+        super(info);
     }
 
-    @Override
+    /*public LookingDirectionHud(HUD hud) {
+        super(hud, "Looking-Direction", "Shows you in which direction you are looking.");
+    }*/
+
+    /*@Override
     public void update(HudRenderer renderer) {
         box.setSize(100 * scale.get(), 10 * scale.get());
     }
+    */
 
-    @Override
+
+    /*@Override
     public void render(HudRenderer renderer) {
         if (mc.player == null) return;
 
@@ -103,10 +105,5 @@ public class LookingDirectionHud extends HudElement {
         });
     }
 
-    private void renderLine(float space, double pos) {
-        /*if () {
-
-        }*/
-
-    }
+ */
 }

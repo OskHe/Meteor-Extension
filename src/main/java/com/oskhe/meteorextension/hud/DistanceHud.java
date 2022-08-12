@@ -1,14 +1,18 @@
-package oskhe.meteorextension.modules.hud;
+package com.oskhe.meteorextension.hud;
 
 import meteordevelopment.meteorclient.settings.BoolSetting;
 import meteordevelopment.meteorclient.settings.DoubleSetting;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.settings.SettingGroup;
-import meteordevelopment.meteorclient.systems.hud.HUD;
-import meteordevelopment.meteorclient.systems.hud.modules.DoubleTextHudElement;
-import net.minecraft.util.hit.HitResult;
+import meteordevelopment.meteorclient.systems.hud.HudElement;
+import meteordevelopment.meteorclient.systems.hud.HudElementInfo;
+import meteordevelopment.meteorclient.systems.hud.elements.MeteorTextHud;
+import com.oskhe.meteorextension.MeteorExtension;
 
-public class DistanceHud extends DoubleTextHudElement {
+public class DistanceHud extends HudElement {
+    public static final HudElementInfo<DistanceHud> INFO = new HudElementInfo<DistanceHud>(MeteorExtension.HUD_GROUP, "distance", "Measures the distance to the Point you are looking at.", DistanceHud::new);
+
+
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
     private static final String left = "Distance: ";
 
@@ -35,7 +39,16 @@ public class DistanceHud extends DoubleTextHudElement {
         .build()
     );
 
-    public final Setting<Boolean> hideLeft = sgGeneral.add(new BoolSetting.Builder()
+    public DistanceHud(HudElementInfo<?> info) {
+        super(info);
+    }
+
+    public DistanceHud() {
+        super(INFO);
+    }
+
+
+    /*public final Setting<Boolean> hideLeft = sgGeneral.add(new BoolSetting.Builder()
         .name("hide-left")
         .description("Wether to show the left text")
         .defaultValue(false)
@@ -46,14 +59,14 @@ public class DistanceHud extends DoubleTextHudElement {
                 setLeft(left);
         })
         .build()
-    );
+    );*/
 
-    public DistanceHud(HUD hud) {
+    /*public DistanceHud(HUD hud) {
         super(hud, "distance", "Measures the distance to the Point you are looking at.", left);
         //super();
-    }
+    }*/
 
-    @Override
+    /*@Override
     protected String getRight() {
         if (mc.player == null) return "0";
 
@@ -68,5 +81,5 @@ public class DistanceHud extends DoubleTextHudElement {
         }
 
         return distance;
-    }
+    }*/
 }

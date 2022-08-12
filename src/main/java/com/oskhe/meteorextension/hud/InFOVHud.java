@@ -1,18 +1,20 @@
-package oskhe.meteorextension.modules.hud;
+package com.oskhe.meteorextension.hud;
 
-import meteordevelopment.meteorclient.renderer.Renderer2D;
 import meteordevelopment.meteorclient.settings.ColorSetting;
 import meteordevelopment.meteorclient.settings.DoubleSetting;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.settings.SettingGroup;
-import meteordevelopment.meteorclient.systems.hud.HUD;
-import meteordevelopment.meteorclient.systems.hud.HudRenderer;
-import meteordevelopment.meteorclient.systems.hud.modules.HudElement;
+import meteordevelopment.meteorclient.systems.hud.HudElement;
+import meteordevelopment.meteorclient.systems.hud.HudElementInfo;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.client.MinecraftClient;
+import com.oskhe.meteorextension.MeteorExtension;
 
 public class InFOVHud extends HudElement {
+    public static final HudElementInfo<InFOVHud> INFO = new HudElementInfo<InFOVHud>(MeteorExtension.HUD_GROUP, "in-fov", "Shows you if you are currnetly in the FOV of someone.", InFOVHud::new);
+
+    private static MinecraftClient mc = MinecraftClient.getInstance();
+
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
 
     private final Setting<Double> scale = sgGeneral.add(new DoubleSetting.Builder()
@@ -47,17 +49,18 @@ public class InFOVHud extends HudElement {
         .build()
     );
 
-    public InFOVHud(HUD hud) {
-        super(hud, "in-fov", "Shows you if you are currnetly in the FOV of someone.");
+    public InFOVHud() {
+        super(INFO);
     }
 
-    @Override
+    /*@Override
     public void update(HudRenderer renderer) {
         box.setSize(100 * scale.get(), 200 * scale.get());
-    }
+    }*/
 
-    @Override
+    /*@Override
     public void render(HudRenderer renderer) {
+
         if (mc.player == null) return;
         if (mc.world == null) return;
 
@@ -86,5 +89,5 @@ public class InFOVHud extends HudElement {
             renderer2.text(count + "", x, y, foregroundColor.get());
             renderer2.end();
         });
-    }
+    }*/
 }

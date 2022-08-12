@@ -1,11 +1,11 @@
-package oskhe.meteorextension.modules.hud;
+package com.oskhe.meteorextension.hud;
 
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import meteordevelopment.meteorclient.renderer.Renderer2D;
 import meteordevelopment.meteorclient.settings.*;
-import meteordevelopment.meteorclient.systems.hud.HUD;
+import meteordevelopment.meteorclient.systems.hud.HudElement;
+import meteordevelopment.meteorclient.systems.hud.HudElementInfo;
 import meteordevelopment.meteorclient.systems.hud.HudRenderer;
-import meteordevelopment.meteorclient.systems.hud.modules.HudElement;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.systems.modules.render.ESP;
 import meteordevelopment.meteorclient.systems.modules.render.Freecam;
@@ -14,11 +14,18 @@ import meteordevelopment.meteorclient.systems.waypoints.Waypoints;
 import meteordevelopment.meteorclient.utils.misc.Vec2;
 import meteordevelopment.meteorclient.utils.misc.Vec3;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.util.math.Vec3d;
+import com.oskhe.meteorextension.MeteorExtension;
 
 public class RadarHud extends HudElement {
+    public static final HudElementInfo<RadarHud> INFO = new HudElementInfo<RadarHud>(MeteorExtension.HUD_GROUP, "radar-extension", "Shows a Radar on your HUD thar tells you where entities are.", RadarHud::new);
+
+    private static MinecraftClient mc = MinecraftClient.getInstance();
+
+
 
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
 
@@ -120,17 +127,19 @@ public class RadarHud extends HudElement {
         .build()
     );*/
 
-    public RadarHud(HUD hud) {
-        super(hud, "radar-extension", "Shows a Radar on your HUD thar tells you where entities are.");
+    public RadarHud() {
+        super(INFO);
     }
 
-    @Override
+    /*@Override
     public void update(HudRenderer renderer) {
         box.setSize(200 * scale.get(), 200 * scale.get());
-    }
+    }*/
 
     @Override
     public void render(HudRenderer renderer) {
+        setSize(200 * scale.get(), 200 * scale.get());
+
         if (mc.player == null) return;
 
         ESP esp = Modules.get().get(ESP.class);
@@ -139,13 +148,15 @@ public class RadarHud extends HudElement {
         Freecam freecam = Modules.get().get(Freecam.class);
         if (freecam == null) return;
 
-        renderer.addPostTask(() -> {
-            double x = box.getX();
-            double y = box.getY();
+        renderer.post(() -> {
+            double x = getX();
+            double y = getY();
 
             Renderer2D.COLOR.begin();
-            Renderer2D.COLOR.quad(x, y, box.width, box.height, backgroundColor.get());
+            Renderer2D.COLOR.quad(x, y, getWidth(), getHeight(), backgroundColor.get());
             Renderer2D.COLOR.render(null);
+
+
 
             Vec3d pos = mc.player.getPos();
             double yaw = mc.player.getHeadYaw() % 360;
@@ -156,7 +167,7 @@ public class RadarHud extends HudElement {
             }
 
             if (drawSelf.get()) {
-                renderer.text(characterSelf.get().toString(), box.width/2 + x, box.height/2 + y, esp.getColor(mc.player));
+                renderer.text(characterSelf.get().toString(), getWidth()/2 + x, getHeight()/2 + y, esp.getColor(mc.player), false);
             }
 
             /*if (showFOV.get()) {
@@ -204,8 +215,8 @@ public class RadarHud extends HudElement {
         ESP esp = Modules.get().get(ESP.class);
         if (esp == null) return;
 
-        double x = box.getX();
-        double y = box.getY();
+        double x = getX();
+        double y = getY();
 
         if (mc.world != null) {
             for (Entity entity : mc.world.getEntities()) {
@@ -225,19 +236,19 @@ public class RadarHud extends HudElement {
                 if (letters.get())
                     icon = entity.getType().getUntranslatedName().substring(0,1).toUpperCase();
 
-                newPos.x += box.width/2/* - (renderer.textWidth(icon) / 2)*/;
-                newPos.y += box.height/2/* - (renderer.textHeight() / 2)*/;
+                newPos.x += getWidth()/2/* - (renderer.textWidth(icon) / 2)*/;
+                newPos.y += getHeight()/2/* - (renderer.textHeight() / 2)*/;
 
-                if (newPos.x < 0 || newPos.y < 0 || newPos.x > box.width - scale.get() || newPos.y > box.height - scale.get()) continue;
+                if (newPos.x < 0 || newPos.y < 0 || newPos.x > getWidth() - scale.get() || newPos.y > getHeight() - scale.get()) continue;
 
-                renderer.text(icon, newPos.x + x, newPos.y + y, esp.getColor(entity));
+                renderer.text(icon, newPos.x + x, newPos.y + y, esp.getColor(entity), false);
             }
         }
     }
 
     private void drawWaypoints(Vec3d pos, double yaw, HudRenderer renderer) {
-        double x = box.getX();
-        double y = box.getY();
+        double x = getX();
+        double y = getY();
 
         if (showWaypoints.get()) {
             for (Waypoint waypoint : Waypoints.get()) {
@@ -254,12 +265,12 @@ public class RadarHud extends HudElement {
                 if (letters.get() && waypoint.name.length() > 0)
                     icon = waypoint.name.substring(0, 1);
 
-                newPos.x += box.width/2/* - (renderer.textWidth(icon) / 2)*/;
-                newPos.y += box.height/2/* - (renderer.textHeight() / 2)*/;
+                newPos.x += getWidth()/2/* - (renderer.textWidth(icon) / 2)*/;
+                newPos.y += getHeight()/2/* - (renderer.textHeight() / 2)*/;
 
-                if (newPos.x < 0 || newPos.y < 0 || newPos.x > box.width - scale.get() || newPos.y > box.height - scale.get()) continue;
+                if (newPos.x < 0 || newPos.y < 0 || newPos.x > getWidth() - scale.get() || newPos.y > getHeight() - scale.get()) continue;
 
-                renderer.text(icon, newPos.x + x, newPos.y + y, waypoint.color);
+                renderer.text(icon, newPos.x + x, newPos.y + y, waypoint.color, false);
             }
         }
     }
