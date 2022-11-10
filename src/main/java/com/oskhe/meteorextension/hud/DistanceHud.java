@@ -1,25 +1,35 @@
 package com.oskhe.meteorextension.hud;
 
-import meteordevelopment.meteorclient.settings.BoolSetting;
-import meteordevelopment.meteorclient.settings.DoubleSetting;
-import meteordevelopment.meteorclient.settings.Setting;
-import meteordevelopment.meteorclient.settings.SettingGroup;
+import meteordevelopment.meteorclient.MeteorClient;
+import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.hud.HudElement;
 import meteordevelopment.meteorclient.systems.hud.HudElementInfo;
-import meteordevelopment.meteorclient.systems.hud.elements.MeteorTextHud;
+import meteordevelopment.meteorclient.systems.hud.HudRenderer;
 import com.oskhe.meteorextension.MeteorExtension;
+import meteordevelopment.meteorclient.utils.render.color.Color;
+import meteordevelopment.meteorclient.utils.render.color.SettingColor;
+import net.minecraft.util.hit.HitResult;
 
 public class DistanceHud extends HudElement {
-    public static final HudElementInfo<DistanceHud> INFO = new HudElementInfo<DistanceHud>(MeteorExtension.HUD_GROUP, "distance", "Measures the distance to the Point you are looking at.", DistanceHud::new);
+    public static final HudElementInfo<DistanceHud> INFO = new HudElementInfo<>(MeteorExtension.HUD_GROUP, "distance", "Measures the distance to the Point you are looking at.", DistanceHud::new);
 
 
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
     private static final String left = "Distance: ";
 
-    public final Setting<Boolean> exact = sgGeneral.add(new BoolSetting.Builder()
-        .name("exact")
-        .description("Wether to show the exact distance")
-        .defaultValue(true)
+    public final Setting<Integer> length = sgGeneral.add(new IntSetting.Builder()
+        .name("length")
+        .description("The number of digits behind the decimal separator.")
+        .defaultValue(2)
+        .range(0, 15)
+        .sliderRange(0, 15)
+        .build()
+    );
+
+    public final Setting<String> textPrimary = sgGeneral.add(new StringSetting.Builder()
+        .name("text")
+        .description("The primary Text")
+        .defaultValue("Distance: ")
         .build()
     );
 
@@ -39,6 +49,36 @@ public class DistanceHud extends HudElement {
         .build()
     );
 
+    public final Setting<SettingColor> colorPrimary = sgGeneral.add(new ColorSetting.Builder()
+        .name("color")
+        .description("The primary color of the Text.")
+        .defaultValue(Color.WHITE.toSetting())
+        .build()
+    );
+
+    public final Setting<SettingColor> colorSecondary = sgGeneral.add(new ColorSetting.Builder()
+        .name("color")
+        .description("The primary color of the Text.")
+        .defaultValue(Color.LIGHT_GRAY.toSetting())
+        .build()
+    );
+
+    private final Setting<Boolean> shadow = sgGeneral.add(new BoolSetting.Builder()
+        .name("shadow")
+        .description("Renders shadow behind text.")
+        .defaultValue(false)
+        .build()
+    );
+
+    private final Setting<Double> size = sgGeneral.add(new DoubleSetting.Builder()
+        .name("size")
+        .description("The size.")
+        .defaultValue(1)
+        .min(0.01)
+        .sliderRange(0.5, 5)
+        .build()
+    );
+
     public DistanceHud(HudElementInfo<?> info) {
         super(info);
     }
@@ -46,6 +86,39 @@ public class DistanceHud extends HudElement {
     public DistanceHud() {
         super(INFO);
     }
+
+    @Override
+    public void tick(HudRenderer renderer) {
+            //setSize(renderer.textWidth(textPrimary.get() + "0.00", shadow.get()), renderer.textHeight(shadow.get()));
+        render(renderer);
+    }
+
+    @Override
+    public void render(HudRenderer renderer) {
+        double x = this.x;
+        double y = this.y;
+
+        String primary = textPrimary.get();
+        String secondary = String.format("%." + length.get() + "f", calcDist());
+
+        setSize(renderer.textWidth(primary, shadow.get(), size.get()) + renderer.textWidth(secondary, shadow.get(), size.get()),
+            renderer.textHeight(shadow.get(), size.get()));
+
+        renderer.text(primary, x, y, colorPrimary.get(), shadow.get(), size.get());
+
+        double offset = renderer.textWidth(textPrimary.get(), shadow.get(), size.get());
+
+        renderer.text(secondary, x, y + offset, colorSecondary.get(), shadow.get(), size.get());
+    }
+
+    private double calcDist() {
+        if (MeteorClient.mc.player == null) return 0d;
+
+        HitResult target = MeteorClient.mc.player.raycast(maxDistance.get(), 0, includeFluids.get());
+
+        return target.getPos().distanceTo(MeteorClient.mc.player.getPos());
+    }
+
 
 
     /*public final Setting<Boolean> hideLeft = sgGeneral.add(new BoolSetting.Builder()

@@ -1,5 +1,6 @@
 package com.oskhe.meteorextension.hud;
 
+import com.oskhe.meteorextension.MeteorExtension;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import meteordevelopment.meteorclient.renderer.Renderer2D;
 import meteordevelopment.meteorclient.settings.*;
@@ -12,20 +13,17 @@ import meteordevelopment.meteorclient.systems.modules.render.Freecam;
 import meteordevelopment.meteorclient.systems.waypoints.Waypoint;
 import meteordevelopment.meteorclient.systems.waypoints.Waypoints;
 import meteordevelopment.meteorclient.utils.misc.Vec2;
-import meteordevelopment.meteorclient.utils.misc.Vec3;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import com.oskhe.meteorextension.MeteorExtension;
 
 public class RadarHud extends HudElement {
-    public static final HudElementInfo<RadarHud> INFO = new HudElementInfo<RadarHud>(MeteorExtension.HUD_GROUP, "radar-extension", "Shows a Radar on your HUD thar tells you where entities are.", RadarHud::new);
+    public static final HudElementInfo<RadarHud> INFO = new HudElementInfo<>(MeteorExtension.HUD_GROUP, "radar-extension", "Shows a Radar on your HUD thar tells you where entities are.", RadarHud::new);
 
     private static MinecraftClient mc = MinecraftClient.getInstance();
-
-
 
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
 
@@ -36,13 +34,6 @@ public class RadarHud extends HudElement {
         .build()
     );
 
-    private final Setting<AvailableCharacters> character = sgGeneral.add(new EnumSetting.Builder<AvailableCharacters>()
-        .name("character")
-        .description("Choose the character to be drawn as the location of the entity.")
-        .defaultValue(AvailableCharacters.STAR)
-        .build()
-    );
-
     private final Setting<Boolean> letters = sgGeneral.add(new BoolSetting.Builder()
         .name("letters")
         .description("Use entity's type first letter.")
@@ -50,10 +41,11 @@ public class RadarHud extends HudElement {
         .build()
     );
 
-    private final Setting<SettingColor> backgroundColor = sgGeneral.add(new ColorSetting.Builder()
-        .name("background-color")
-        .description("The color of the background.")
-        .defaultValue(new SettingColor(0, 0, 0, 64))
+    private final Setting<AvailableCharacters> character = sgGeneral.add(new EnumSetting.Builder<AvailableCharacters>()
+        .name("character")
+        .description("Choose the character to be drawn as the location of the entity.")
+        .defaultValue(AvailableCharacters.STAR)
+        .visible(() -> !letters.get())
         .build()
     );
 
@@ -94,12 +86,28 @@ public class RadarHud extends HudElement {
         .build()
     );
 
+    private final Setting<SettingColor> backgroundColor = sgGeneral.add(new ColorSetting.Builder()
+        .name("background-color")
+        .description("The color of the background.")
+        .defaultValue(new SettingColor(0, 0, 0, 64))
+        .build()
+    );
+
+    private final Setting<Double> scaleCharacterd = sgGeneral.add(new DoubleSetting.Builder()
+        .name("scale-characters")
+        .description("The size of the characters.")
+        .defaultValue(1)
+        .min(0.1)
+        .sliderRange(0.01, 3)
+        .build()
+    );
+
     private final Setting<Double> scale = sgGeneral.add(new DoubleSetting.Builder()
         .name("scale")
-        .description("The scale.")
+        .description("The size of the radar.")
         .defaultValue(1)
-        .min(1)
-        .sliderRange(0.01, 5)
+        .min(0.1)
+        .sliderRange(0.01, 3)
         .build()
     );
 
@@ -108,33 +116,13 @@ public class RadarHud extends HudElement {
         .description("Radar zoom.")
         .defaultValue(1)
         .min(0.01)
-        .sliderRange(0.01, 3)
+        .sliderRange(0.01, 5)
         .build()
     );
-
-    /*private final Setting<Boolean> showFOV = sgGeneral.add(new BoolSetting.Builder()
-        .name("show-fow")
-        .description("Wether to show the FOV")
-        .defaultValue(true)
-        .build()
-    );
-
-    private final Setting<SettingColor> fovColor = sgGeneral.add(new ColorSetting.Builder()
-        .name("background-color")
-        .description("The color of the background.")
-        .defaultValue(new SettingColor(128, 128, 128, 64))
-        .visible(showFOV::get)
-        .build()
-    );*/
 
     public RadarHud() {
         super(INFO);
     }
-
-    /*@Override
-    public void update(HudRenderer renderer) {
-        box.setSize(200 * scale.get(), 200 * scale.get());
-    }*/
 
     @Override
     public void render(HudRenderer renderer) {
@@ -152,11 +140,6 @@ public class RadarHud extends HudElement {
             double x = getX();
             double y = getY();
 
-            Renderer2D.COLOR.begin();
-            Renderer2D.COLOR.quad(x, y, getWidth(), getHeight(), backgroundColor.get());
-            Renderer2D.COLOR.render(null);
-
-
 
             Vec3d pos = mc.player.getPos();
             double yaw = mc.player.getHeadYaw() % 360;
@@ -166,31 +149,21 @@ public class RadarHud extends HudElement {
                 yaw = freecam.yaw;
             }
 
-            if (drawSelf.get()) {
-                renderer.text(characterSelf.get().toString(), getWidth()/2 + x, getHeight()/2 + y, esp.getColor(mc.player), false);
-            }
-
-            /*if (showFOV.get()) {
-                Utils.unscaledProjection();
-
-                //Renderer2D.COLOR.triangles.begin();
-                Renderer2D.COLOR.triangles.vec2(box.width / 2 + x, box.height / 2 + y);
-                Renderer2D.COLOR.triangles.vec2(x, y);
-                Renderer2D.COLOR.triangles.vec2(box.width + x, y);
-                Renderer2D.COLOR.triangles.end();
-            }*/
+            Renderer2D.COLOR.begin();
+            Renderer2D.COLOR.quad(x, y, getWidth(), getHeight(), backgroundColor.get());
+            Renderer2D.COLOR.render(null);
 
             drawEntities(pos, yaw, renderer);
 
             drawWaypoints(pos, yaw, renderer);
 
-            Renderer2D.COLOR.render(null);
+            if (drawSelf.get()) {
+                renderer.text(characterSelf.get().toString(), getWidth()/2d + x, getHeight()/2d + y, esp.getEntityTypeColor(mc.player), false, scaleCharacterd.get());
+            }
         });
     }
 
     private boolean shouldSkip(Entity entity) {
-        //if (!entities.get().getBoolean(entity.getType())) return true;
-        //return !EntityUtils.isInRenderDistance(entity);
         return !entities.get().getBoolean(entity.getType());
     }
 
@@ -236,12 +209,12 @@ public class RadarHud extends HudElement {
                 if (letters.get())
                     icon = entity.getType().getUntranslatedName().substring(0,1).toUpperCase();
 
-                newPos.x += getWidth()/2/* - (renderer.textWidth(icon) / 2)*/;
-                newPos.y += getHeight()/2/* - (renderer.textHeight() / 2)*/;
+                newPos.x += getWidth()/2d/* - (renderer.textWidth(icon) / 2)*/;
+                newPos.y += getHeight()/2d/* - (renderer.textHeight() / 2)*/;
 
                 if (newPos.x < 0 || newPos.y < 0 || newPos.x > getWidth() - scale.get() || newPos.y > getHeight() - scale.get()) continue;
 
-                renderer.text(icon, newPos.x + x, newPos.y + y, esp.getColor(entity), false);
+                renderer.text(icon, newPos.x + x, newPos.y + y, esp.getEntityTypeColor(entity), false, scaleCharacterd.get());
             }
         }
     }
@@ -252,8 +225,8 @@ public class RadarHud extends HudElement {
 
         if (showWaypoints.get()) {
             for (Waypoint waypoint : Waypoints.get()) {
-                Vec3 c = waypoint.getCoords();
-                Vec3d coords = new Vec3d(c.x, c.y, c.z);
+                BlockPos c = waypoint.getPos();
+                Vec3d coords = new Vec3d(c.getX(), c.getY(), c.getZ());
 
                 double xPos = ((coords.getX() - pos.getX()) * scale.get() * zoom.get());
                 double yPos = ((coords.getZ() - pos.getZ()) * scale.get() * zoom.get());
@@ -262,15 +235,17 @@ public class RadarHud extends HudElement {
 
                 String icon = characterWaypoints.get().toString();
 
-                if (letters.get() && waypoint.name.length() > 0)
-                    icon = waypoint.name.substring(0, 1);
+                if (letters.get() && waypoint.name.get().length() > 0)
+                    icon = waypoint.name.get().substring(0, 1);
 
-                newPos.x += getWidth()/2/* - (renderer.textWidth(icon) / 2)*/;
-                newPos.y += getHeight()/2/* - (renderer.textHeight() / 2)*/;
+                newPos.x += getWidth()/2d/* - (renderer.textWidth(icon) / 2)*/;
+                newPos.y += getHeight()/2d/* - (renderer.textHeight() / 2)*/;
+
+                //SettingColor color = waypoint.color.get();
 
                 if (newPos.x < 0 || newPos.y < 0 || newPos.x > getWidth() - scale.get() || newPos.y > getHeight() - scale.get()) continue;
 
-                renderer.text(icon, newPos.x + x, newPos.y + y, waypoint.color, false);
+                renderer.text(icon, newPos.x + x, newPos.y + y, waypoint.color.get(), false, scaleCharacterd.get());
             }
         }
     }
@@ -278,11 +253,12 @@ public class RadarHud extends HudElement {
     public enum AvailableCharacters {
         STAR("*"),
         POINT("•"),
+        LITTLE_POINT("."),
         CIRCLE("◦"),
         PLUS("+"),
         DOT("●");
 
-        private String character = "";
+        private String character;
 
         AvailableCharacters(String character) {
             this.character = character;

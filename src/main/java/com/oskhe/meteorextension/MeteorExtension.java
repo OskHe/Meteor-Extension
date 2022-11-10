@@ -1,13 +1,20 @@
 package com.oskhe.meteorextension;
 
+import com.oskhe.meteorextension.commands.ModuleBindsCommand;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.addons.GithubRepo;
 import meteordevelopment.meteorclient.addons.MeteorAddon;
+import meteordevelopment.meteorclient.mixin.StarscriptAccessor;
 import meteordevelopment.meteorclient.systems.Systems;
+import meteordevelopment.meteorclient.systems.commands.Commands;
 import meteordevelopment.meteorclient.systems.hud.Hud;
 import meteordevelopment.meteorclient.systems.hud.HudGroup;
 import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
+import meteordevelopment.meteorclient.utils.misc.MeteorStarscript;
+import meteordevelopment.starscript.Starscript;
+import meteordevelopment.starscript.value.Value;
+import meteordevelopment.starscript.value.ValueMap;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.item.Items;
@@ -28,28 +35,17 @@ public class MeteorExtension extends MeteorAddon {
         LOG.info("Initializing Meteor-Extension");
 
         // Required when using @EventHandler
-        MeteorClient.EVENT_BUS.registerLambdaFactory("com.oskhe.meteorextension", (lookupInMethod, klass) -> (MethodHandles.Lookup) lookupInMethod.invoke(null, klass, MethodHandles.lookup()));
+        //MeteorClient.EVENT_BUS.registerLambdaFactory("com.oskhe.meteorextension", (lookupInMethod, klass) -> (MethodHandles.Lookup) lookupInMethod.invoke(null, klass, MethodHandles.lookup()));
 
-        //Modules modules = Systems.get(Modules.class);
-
-        //Commands commands = Systems.get(Commands.class);
         //     __o
         //    / /\_
         //    _/\
         //      /
-        // HUD
-        /*HUD hud = Systems.get(HUD.class);
-        hud.elements.add(new RadarHud(hud));
-        hud.elements.add(new DistanceHud(hud));*/
 
         Hud.get().register(RadarHud.INFO);
+        Hud.get().register(DistanceHud.INFO);
 
-        //hud.elements.add(new InFOVHud(hud));
-
-        //hud.bottomRight.add(new RadarHud(hud));
-        //hud.topLeft.add(new DistanceHud(hud));
-        //hud.topCenter.add(new InFOVHud(hud));
-
+        //Commands.get().add(new ModuleBindsCommand());
     }
 
     @Override
