@@ -88,12 +88,6 @@ public class DistanceHud extends HudElement {
     }
 
     @Override
-    public void tick(HudRenderer renderer) {
-            //setSize(renderer.textWidth(textPrimary.get() + "0.00", shadow.get()), renderer.textHeight(shadow.get()));
-        render(renderer);
-    }
-
-    @Override
     public void render(HudRenderer renderer) {
         double x = this.x;
         double y = this.y;
@@ -108,7 +102,7 @@ public class DistanceHud extends HudElement {
 
         double offset = renderer.textWidth(textPrimary.get(), shadow.get(), size.get());
 
-        renderer.text(secondary, x, y + offset, colorSecondary.get(), shadow.get(), size.get());
+        renderer.text(secondary, x + offset, y, colorSecondary.get(), shadow.get(), size.get());
     }
 
     private double calcDist() {

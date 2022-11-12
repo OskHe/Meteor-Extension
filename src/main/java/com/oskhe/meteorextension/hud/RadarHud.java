@@ -34,24 +34,18 @@ public class RadarHud extends HudElement {
         .build()
     );
 
-    private final Setting<Boolean> letters = sgGeneral.add(new BoolSetting.Builder()
-        .name("letters")
-        .description("Use entity's type first letter.")
-        .defaultValue(false)
-        .build()
-    );
-
-    private final Setting<AvailableCharacters> character = sgGeneral.add(new EnumSetting.Builder<AvailableCharacters>()
-        .name("character")
-        .description("Choose the character to be drawn as the location of the entity.")
-        .defaultValue(AvailableCharacters.STAR)
-        .visible(() -> !letters.get())
+    private final Setting<Double> scalePoints = sgGeneral.add(new DoubleSetting.Builder()
+        .name("scale-points")
+        .description("The size of the Points.")
+        .defaultValue(1)
+        .min(1)
+        .sliderRange(1, 10)
         .build()
     );
 
     public final Setting<Boolean> drawSelf = sgGeneral.add(new BoolSetting.Builder()
         .name("draw-self")
-        .description("Wether to draw you on the Radar")
+        .description("Whether  to draw you on the Radar")
         .defaultValue(true)
         .build()
     );
@@ -59,14 +53,14 @@ public class RadarHud extends HudElement {
     private final Setting<AvailableCharacters> characterSelf = sgGeneral.add(new EnumSetting.Builder<AvailableCharacters>()
         .name("character-self")
         .description("Choose the character to be drawn as the location of your self.")
-        .defaultValue(AvailableCharacters.DOT)
+        .defaultValue(AvailableCharacters.PLUS)
         .visible(drawSelf::get)
         .build()
     );
 
     private final Setting<Boolean> followFreecam = sgGeneral.add(new BoolSetting.Builder()
         .name("follow-freecam")
-        .description("Wether the radar center should follow the freecam position.")
+        .description("Whether the radar center should follow the freecam position.")
         .defaultValue(true)
         .build()
     );
@@ -93,20 +87,11 @@ public class RadarHud extends HudElement {
         .build()
     );
 
-    private final Setting<Double> scaleCharacterd = sgGeneral.add(new DoubleSetting.Builder()
-        .name("scale-characters")
-        .description("The size of the characters.")
-        .defaultValue(1)
-        .min(0.1)
-        .sliderRange(0.01, 3)
-        .build()
-    );
-
     private final Setting<Double> scale = sgGeneral.add(new DoubleSetting.Builder()
         .name("scale")
         .description("The size of the radar.")
         .defaultValue(1)
-        .min(0.1)
+        .min(0.01)
         .sliderRange(0.01, 3)
         .build()
     );
@@ -140,34 +125,99 @@ public class RadarHud extends HudElement {
             double x = getX();
             double y = getY();
 
-
             Vec3d pos = mc.player.getPos();
             double yaw = mc.player.getHeadYaw() % 360;
 
             if (freecam.isActive() && followFreecam.get()) {
                 pos = new Vec3d(freecam.pos.x, freecam.pos.y, freecam.pos.z);
-                yaw = freecam.yaw;
+                yaw = freecam.yaw % 360;
             }
 
             Renderer2D.COLOR.begin();
             Renderer2D.COLOR.quad(x, y, getWidth(), getHeight(), backgroundColor.get());
             Renderer2D.COLOR.render(null);
 
-            drawEntities(pos, yaw, renderer);
+            drawEntities(pos, yaw);
 
             drawWaypoints(pos, yaw, renderer);
 
             if (drawSelf.get()) {
-                renderer.text(characterSelf.get().toString(), getWidth()/2d + x, getHeight()/2d + y, esp.getEntityTypeColor(mc.player), false, scaleCharacterd.get());
+                Vec2 center = calcTextOffset(characterSelf.get().toString(), new Vec2(x, y), renderer);
+                center.x += getWidth()/2d;
+                center.y += getHeight()/2d;
+                renderer.text(characterSelf.get().toString(), center.x, center.y, esp.getEntityTypeColor(mc.player), false, 1);
             }
+
         });
     }
 
-    private boolean shouldSkip(Entity entity) {
-        return !entities.get().getBoolean(entity.getType());
+    private void drawEntities(Vec3d posOrigin, double yaw) {
+        ESP esp = Modules.get().get(ESP.class);
+        if (esp == null) return;
+
+        double x = getX();
+        double y = getY();
+
+        if (mc.world != null) {
+            Renderer2D.COLOR.begin();
+            for (Entity entity : mc.world.getEntities()) {
+                if (shouldSkip(entity)) continue;
+
+                Vec2 pos = new Vec2(0, 0);
+
+                pos.x = ((entity.getX() - posOrigin.getX()) * scale.get() * zoom.get());
+                pos.y = ((entity.getZ() - posOrigin.getZ()) * scale.get() * zoom.get());
+
+                pos = rotate(pos, yaw);
+
+                pos.x += getWidth()/2d;
+                pos.y += getHeight()/2d;
+
+                if (pos.x < 0 || pos.y < 0 || pos.x > getWidth() || pos.y > getHeight()) continue;
+
+                Renderer2D.COLOR.quad((pos.x - scalePoints.get()/2) + x,
+                    (pos.y - scalePoints.get()/2) + y,
+                    scalePoints.get(),
+                    scalePoints.get(),
+                    esp.getEntityTypeColor(entity).a(255));
+            }
+
+            Renderer2D.COLOR.render(null);
+        }
+    }
+
+    private void drawWaypoints(Vec3d posOrigin, double yaw, HudRenderer renderer) {
+        double x = getX();
+        double y = getY();
+
+        if (showWaypoints.get()) {
+            for (Waypoint waypoint : Waypoints.get()) {
+                BlockPos waypointPos = waypoint.getPos();
+
+                Vec2 pos = new Vec2(0, 0);
+
+                pos.x = ((waypointPos.getX() - posOrigin.getX()) * scale.get() * zoom.get());
+                pos.y = ((waypointPos.getZ() - posOrigin.getZ()) * scale.get() * zoom.get());
+
+                pos = rotate(pos, yaw);
+
+                String symbol = characterWaypoints.get().toString();
+
+                pos.x += getWidth()/2d;
+                pos.y += getHeight()/2d;
+
+                pos = calcTextOffset(symbol, pos, renderer);
+
+                if (pos.x < 0 || pos.y < 0 || pos.x > getWidth() || pos.y > getHeight()) continue;
+
+                renderer.text(symbol, pos.x + x, pos.y + y, waypoint.color.get(), false, 1);
+            }
+        }
     }
 
     private Vec2 rotate(Vec2 vec, double angle) {
+        Vec2 ret = new Vec2(0, 0);
+
         double dist = Math.sqrt(vec.x*vec.x + vec.y*vec.y);
 
         double theta = Math.atan(vec.y / vec.x);
@@ -178,87 +228,32 @@ public class RadarHud extends HudElement {
 
         theta = theta - (angle * (Math.PI / 180f));
 
-        vec.x = dist * Math.cos(theta);
-        vec.y = dist * Math.sin(theta);
+        ret.x = dist * Math.cos(theta);
+        ret.y = dist * Math.sin(theta);
 
-        return vec;
+        return ret;
     }
 
-    private void drawEntities(Vec3d pos, double yaw, HudRenderer renderer) {
-        ESP esp = Modules.get().get(ESP.class);
-        if (esp == null) return;
+    private Vec2 calcTextOffset(String symbol, Vec2 pos, HudRenderer renderer) {
+        Vec2 ret = new Vec2(pos.x, pos.y);
 
-        double x = getX();
-        double y = getY();
+        ret.x -= renderer.textWidth(symbol) / 2;
+        ret.y -= renderer.textHeight() / 2;
 
-        if (mc.world != null) {
-            for (Entity entity : mc.world.getEntities()) {
-                if (shouldSkip(entity)) continue;
-
-                assert mc.player != null;
-
-                //entity.pos
-
-                double xPos = ((entity.getX() - pos.getX()) * scale.get() * zoom.get());
-                double yPos = ((entity.getZ() - pos.getZ()) * scale.get() * zoom.get());
-
-                Vec2 newPos = rotate(new Vec2(xPos, yPos), yaw);
-
-                String icon = character.get().toString();
-
-                if (letters.get())
-                    icon = entity.getType().getUntranslatedName().substring(0,1).toUpperCase();
-
-                newPos.x += getWidth()/2d/* - (renderer.textWidth(icon) / 2)*/;
-                newPos.y += getHeight()/2d/* - (renderer.textHeight() / 2)*/;
-
-                if (newPos.x < 0 || newPos.y < 0 || newPos.x > getWidth() - scale.get() || newPos.y > getHeight() - scale.get()) continue;
-
-                renderer.text(icon, newPos.x + x, newPos.y + y, esp.getEntityTypeColor(entity), false, scaleCharacterd.get());
-            }
-        }
+        return ret;
     }
 
-    private void drawWaypoints(Vec3d pos, double yaw, HudRenderer renderer) {
-        double x = getX();
-        double y = getY();
-
-        if (showWaypoints.get()) {
-            for (Waypoint waypoint : Waypoints.get()) {
-                BlockPos c = waypoint.getPos();
-                Vec3d coords = new Vec3d(c.getX(), c.getY(), c.getZ());
-
-                double xPos = ((coords.getX() - pos.getX()) * scale.get() * zoom.get());
-                double yPos = ((coords.getZ() - pos.getZ()) * scale.get() * zoom.get());
-
-                Vec2 newPos = rotate(new Vec2(xPos, yPos), yaw);
-
-                String icon = characterWaypoints.get().toString();
-
-                if (letters.get() && waypoint.name.get().length() > 0)
-                    icon = waypoint.name.get().substring(0, 1);
-
-                newPos.x += getWidth()/2d/* - (renderer.textWidth(icon) / 2)*/;
-                newPos.y += getHeight()/2d/* - (renderer.textHeight() / 2)*/;
-
-                //SettingColor color = waypoint.color.get();
-
-                if (newPos.x < 0 || newPos.y < 0 || newPos.x > getWidth() - scale.get() || newPos.y > getHeight() - scale.get()) continue;
-
-                renderer.text(icon, newPos.x + x, newPos.y + y, waypoint.color.get(), false, scaleCharacterd.get());
-            }
-        }
+    private boolean shouldSkip(Entity entity) {
+        return !entities.get().getBoolean(entity.getType());
     }
 
     public enum AvailableCharacters {
-        STAR("*"),
         POINT("•"),
-        LITTLE_POINT("."),
         CIRCLE("◦"),
         PLUS("+"),
         DOT("●");
 
-        private String character;
+        private final String character;
 
         AvailableCharacters(String character) {
             this.character = character;
