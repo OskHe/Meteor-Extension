@@ -50,15 +50,15 @@ public class DistanceHud extends HudElement {
     );
 
     public final Setting<SettingColor> colorPrimary = sgGeneral.add(new ColorSetting.Builder()
-        .name("color")
+        .name("color-primary")
         .description("The primary color of the Text.")
         .defaultValue(Color.WHITE.toSetting())
         .build()
     );
 
     public final Setting<SettingColor> colorSecondary = sgGeneral.add(new ColorSetting.Builder()
-        .name("color")
-        .description("The primary color of the Text.")
+        .name("color-secondary")
+        .description("The secondary color of the Text.")
         .defaultValue(Color.LIGHT_GRAY.toSetting())
         .build()
     );
@@ -112,41 +112,4 @@ public class DistanceHud extends HudElement {
 
         return target.getPos().distanceTo(MeteorClient.mc.player.getPos());
     }
-
-
-
-    /*public final Setting<Boolean> hideLeft = sgGeneral.add(new BoolSetting.Builder()
-        .name("hide-left")
-        .description("Wether to show the left text")
-        .defaultValue(false)
-        .onChanged(on -> {
-            if (on)
-                setLeft("");
-            else
-                setLeft(left);
-        })
-        .build()
-    );*/
-
-    /*public DistanceHud(HUD hud) {
-        super(hud, "distance", "Measures the distance to the Point you are looking at.", left);
-        //super();
-    }*/
-
-    /*@Override
-    protected String getRight() {
-        if (mc.player == null) return "0";
-
-        HitResult target = mc.player.raycast(maxDistance.get(), 0, includeFluids.get());
-
-        double dist = target.getPos().distanceTo(mc.player.getPos());
-
-        String distance = String.valueOf((int)dist);
-
-        if (exact.get()) {
-            distance = "%.3f".formatted(dist);
-        }
-
-        return distance;
-    }*/
 }

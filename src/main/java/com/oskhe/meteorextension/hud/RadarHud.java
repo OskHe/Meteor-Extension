@@ -13,7 +13,9 @@ import meteordevelopment.meteorclient.systems.modules.render.Freecam;
 import meteordevelopment.meteorclient.systems.waypoints.Waypoint;
 import meteordevelopment.meteorclient.systems.waypoints.Waypoints;
 import meteordevelopment.meteorclient.utils.misc.Vec2;
+import meteordevelopment.meteorclient.utils.player.PlayerUtils;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
+import meteordevelopment.meteorclient.utils.world.Dimension;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -77,6 +79,13 @@ public class RadarHud extends HudElement {
         .description("Choose the character to be drawn as the location of the waypoint.")
         .defaultValue(AvailableCharacters.DOT)
         .visible(showWaypoints::get)
+        .build()
+    );
+
+    private final Setting<Boolean> checkDimension = sgGeneral.add(new BoolSetting.Builder()
+        .name("dimension-check")
+        .description("Check whether the waypoint is in the current dimension")
+        .defaultValue(true)
         .build()
     );
 
@@ -192,6 +201,11 @@ public class RadarHud extends HudElement {
 
         if (showWaypoints.get()) {
             for (Waypoint waypoint : Waypoints.get()) {
+
+                if (checkDimension.get())
+                    if (!shouldRender(waypoint))
+                        continue;
+
                 BlockPos waypointPos = waypoint.getPos();
 
                 Vec2 pos = new Vec2(0, 0);
@@ -245,6 +259,14 @@ public class RadarHud extends HudElement {
 
     private boolean shouldSkip(Entity entity) {
         return !entities.get().getBoolean(entity.getType());
+    }
+
+    private boolean shouldRender(Waypoint waypoint) {
+        if (waypoint.dimension.get().equals(PlayerUtils.getDimension())) return true;
+        if (waypoint.opposite.get()
+            && !PlayerUtils.getDimension().equals(Dimension.End)) return true;
+
+        return false;
     }
 
     public enum AvailableCharacters {

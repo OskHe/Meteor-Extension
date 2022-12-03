@@ -1,29 +1,21 @@
 package com.oskhe.meteorextension;
 
-import com.oskhe.meteorextension.commands.ModuleBindsCommand;
-import meteordevelopment.meteorclient.MeteorClient;
+import com.oskhe.meteorextension.hud.DistanceHud;
+import com.oskhe.meteorextension.hud.RadarHud;
+import com.oskhe.meteorextension.hud.TextHUDs;
 import meteordevelopment.meteorclient.addons.GithubRepo;
 import meteordevelopment.meteorclient.addons.MeteorAddon;
-import meteordevelopment.meteorclient.mixin.StarscriptAccessor;
-import meteordevelopment.meteorclient.systems.Systems;
-import meteordevelopment.meteorclient.systems.commands.Commands;
 import meteordevelopment.meteorclient.systems.hud.Hud;
 import meteordevelopment.meteorclient.systems.hud.HudGroup;
 import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.utils.misc.MeteorStarscript;
-import meteordevelopment.starscript.Starscript;
-import meteordevelopment.starscript.value.Value;
 import meteordevelopment.starscript.value.ValueMap;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.item.Items;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.oskhe.meteorextension.hud.DistanceHud;
-import com.oskhe.meteorextension.hud.RadarHud;
-
-import java.lang.invoke.MethodHandles;
 
 public class MeteorExtension extends MeteorAddon {
     public static final Logger LOG = LoggerFactory.getLogger(MeteorExtension.class);
@@ -44,6 +36,11 @@ public class MeteorExtension extends MeteorAddon {
 
         Hud.get().register(RadarHud.INFO);
         Hud.get().register(DistanceHud.INFO);
+        Hud.get().register(TextHUDs.INFO);
+
+        MeteorStarscript.ss.set("extension", new ValueMap()
+            .set("distance", StarscriptUtils::getDistance)
+        );
 
         //Commands.get().add(new ModuleBindsCommand());
     }
